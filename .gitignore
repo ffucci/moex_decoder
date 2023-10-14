@@ -1,6 +1,6 @@
 .cache/*
 build/
 cmake-build-debug/
-.idea/
+.idea/*
 data/
 .DS_Store
