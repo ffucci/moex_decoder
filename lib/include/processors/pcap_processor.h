@@ -50,8 +50,9 @@ public:
                 << std::endl;
 
       size_t total_number_packets = 0;
+      PacketProcessor processor;
       while (pcap_buffer_->is_started()) {
-        total_number_packets += process_block();
+        total_number_packets += process_batch(processor);
         std::this_thread::sleep_for(std::chrono::microseconds(1000));
       }
       std::cout << "##### Finished to process file ### " << std::endl;
@@ -63,7 +64,7 @@ public:
     consumer_thread_.join();
   }
 
-  [[nodiscard]] size_t process_block() {
+  [[nodiscard]] size_t process_batch(PacketProcessor &processor) {
     using namespace pcap::types;
 
     size_t offset = sizeof(pcap::types::pcap_hdr_t);
@@ -72,9 +73,9 @@ public:
     while (auto next_batch = pcap_buffer_->next_batch()) {
       std::cout << "### BATCH NUMBER " << batch_number << std::endl;
 
-      PacketProcessor processor;
       size_t packet_nr_in_batch{0};
       for (auto &packet : next_batch->packets) {
+        processor.process_packet(packet, []() {});
 
         if constexpr (ENABLE_DEBUGGING) {
           if (packet_nr_in_batch == 0) {
@@ -84,7 +85,6 @@ public:
           }
         }
 
-        processor.process_packet(packet);
         ++packet_nr_in_batch;
       }
 
