@@ -1,0 +1,9 @@
+add_library(task
+    cli.cpp
+    packet_processor.cpp
+    pcap_processor.cpp
+    simba_decoder.cpp
+    utility.cpp)
+add_library(task::processors ALIAS task)
+
+target_include_directories(task PUBLIC include)
