@@ -1,8 +1,8 @@
 #pragma once
 
-#include <_types/_uint16_t.h>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <span>
@@ -27,6 +27,11 @@ struct EthernetPacket {
 struct IPPacket {
   std::byte version_ihl{0};
   std::array<std::byte, 2> total_length{};
+  std::byte time_to_live{};
+  std::byte protocol{};
+
+  uint8_t version{};
+  uint8_t ihl{};
 
   explicit IPPacket(std::span<const std::byte> packet) {
     size_t offset = 0;
@@ -35,21 +40,30 @@ struct IPPacket {
     offset += sizeof(version_ihl);
     offset += 1;
     std::memcpy(total_length.data(), packet.data() + offset,
-                sizeof(total_length));
+                total_length.size());
+    version = static_cast<uint8_t>(version_ihl >> 4);
+    ihl = static_cast<uint8_t>(version_ihl & std::byte{0xF});
+
+    offset += total_length.size() + 4;
+    std::memcpy(&time_to_live, packet.data() + offset, 1);
+
+    offset += 1;
+    std::memcpy(&protocol, packet.data() + offset, 1);
   }
 
-  std::string to_string() {
+  [[nodiscard]] std::string to_string() const noexcept {
     std::stringstream stream;
-    auto version = (version_ihl >> 4);
-    auto ihl = version_ihl & std::byte{0xF};
     uint16_t converted_total_length =
         (static_cast<uint16_t>(total_length[1]) +
          (static_cast<uint16_t>(total_length[0]) << 8));
     stream << "version: " << (int)version << std::endl
-           << "ihl: " << (int)ihl << std::endl
-           << "total_length: " << converted_total_length << std::endl;
+           << "ihl: " << (int)(ihl * 4) << std::endl
+           << "total_length: " << converted_total_length << std::endl
+           << "protocol: " << (int)protocol;
     return stream.str();
   }
+
+  size_t header_length() { return ihl * 4; }
 };
 
 } // namespace task::datamodel
