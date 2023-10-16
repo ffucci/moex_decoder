@@ -13,6 +13,8 @@
 #include "processors/pcap_buffer.h"
 #include "processors/pcap_types.h"
 #include "processors/utility.h"
+#include "simba_decoder/simba_decoder.h"
+#include "simba_decoder/simba_types.h"
 
 namespace task::processors {
 class PCAPProcessor {
@@ -50,7 +52,11 @@ public:
                 << std::endl;
 
       size_t total_number_packets = 0;
-      PacketProcessor processor;
+      std::invocable<std::span<const std::byte>> auto handler =
+          [](std::span<const std::byte> udp_payload) {
+            simba::decoder::SIMBADecoder decoder(udp_payload);
+          };
+      PacketProcessor processor(handler);
       while (pcap_buffer_->is_started()) {
         total_number_packets += process_batch(processor);
         std::this_thread::sleep_for(std::chrono::microseconds(1000));
@@ -64,7 +70,8 @@ public:
     consumer_thread_.join();
   }
 
-  [[nodiscard]] size_t process_batch(PacketProcessor &processor) {
+  template <std::invocable<std::span<const std::byte>> Handler>
+  [[nodiscard]] size_t process_batch(PacketProcessor<Handler> &processor) {
     using namespace pcap::types;
 
     size_t offset = sizeof(pcap::types::pcap_hdr_t);
@@ -75,7 +82,7 @@ public:
 
       size_t packet_nr_in_batch{0};
       for (auto &packet : next_batch->packets) {
-        processor.process_packet(packet, []() {});
+        processor.process_packet(packet);
 
         if constexpr (ENABLE_DEBUGGING) {
           if (packet_nr_in_batch == 0) {

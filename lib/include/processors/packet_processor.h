@@ -7,10 +7,14 @@
 
 namespace task::processors {
 
+template <std::invocable<std::span<const std::byte>> UDPPacketHandler>
 class PacketProcessor {
+
 public:
-  void process_packet(std::span<const std::byte> packet,
-                      std::invocable auto on_upd_packet) {
+  PacketProcessor(const UDPPacketHandler &on_upd_packet)
+      : udp_packet_handler_(on_upd_packet) {}
+
+  void process_packet(std::span<const std::byte> packet) {
     std::span<const std::byte> ethernet_frame{packet.data(), ETH_PACKET_SIZE};
     datamodel::EthernetPacket eth_packet(ethernet_frame);
     size_t offset = ETH_PACKET_SIZE;
@@ -31,12 +35,14 @@ public:
                 << std::endl;
     }
     offset += UDP_HEADER_SIZE;
-    [[maybe_unused]] auto upd_span = packet.subspan(offset);
+    [[maybe_unused]] auto udp_span = packet.subspan(offset);
 
+    udp_packet_handler_(udp_span);
     ++packet_processed_;
   }
 
 private:
+  UDPPacketHandler udp_packet_handler_;
   size_t packet_processed_{1};
   static constexpr size_t ETH_PACKET_SIZE = 14;
   static constexpr size_t UDP_HEADER_SIZE = 8;
