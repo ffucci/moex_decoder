@@ -53,8 +53,8 @@ public:
 
       size_t total_number_packets = 0;
       std::invocable<std::span<const std::byte>> auto handler =
-          [](std::span<const std::byte> udp_payload) {
-            simba::decoder::SIMBADecoder decoder(udp_payload);
+          [this](std::span<const std::byte> udp_payload) {
+            decoder.decode_message(udp_payload);
           };
       PacketProcessor processor(handler);
       while (pcap_buffer_->is_started()) {
@@ -133,6 +133,8 @@ private:
   std::unique_ptr<mt_buffer::PCAPBuffer> pcap_buffer_{};
 
   std::thread consumer_thread_{};
+
+  simba::decoder::SIMBADecoder decoder;
   static constexpr size_t HEADER_SIZE = sizeof(pcap::types::pcap_hdr_t);
   static constexpr bool ENABLE_DEBUGGING{true};
 };
