@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <span>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -36,7 +37,8 @@ public:
     size_t batch_number = 1;
     size_t total_number_packets = 0;
     while (auto next_batch = pcap_buffer_->next_batch()) {
-      std::cout << "### BATCH NUMBER " << batch_number << std::endl;
+      std::cout << log_prefix_ << " - consuming batch number (" << batch_number
+                << ")" << std::endl;
 
       size_t packet_nr_in_batch{0};
       for (auto &packet : next_batch->packets) {
@@ -53,7 +55,7 @@ public:
         ++packet_nr_in_batch;
       }
 
-      std::cout << "Number of read packets " << std::dec
+      std::cout << log_prefix_ << " - Number of read packets " << std::dec
                 << next_batch->number_packets << std::endl;
       // fetch enough data to process the current frame
       ++batch_number;
@@ -77,6 +79,8 @@ private:
 
   simba::decoder::SIMBADecoder decoder;
   static constexpr size_t HEADER_SIZE = sizeof(pcap::types::pcap_hdr_t);
-  static constexpr bool ENABLE_DEBUGGING{true};
+  static constexpr bool ENABLE_DEBUGGING{false};
+
+  static constexpr std::string_view log_prefix_{"[PCAP_PROCESSOR]"};
 };
 } // namespace task::processors

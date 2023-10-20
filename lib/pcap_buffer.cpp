@@ -4,8 +4,9 @@ namespace task::processors::mt_buffer {
 
 void PCAPBuffer::start_buffering() {
   producer_thread_ = std::thread([this]() {
-    std::cout << "# Start buffering " << std::endl;
-    is_started_.store(true, std::memory_order_release);
+    std::cout << log_prefix_ << " Start buffering " << std::endl;
+    is_started_ = true;
+    is_started_.notify_one();
 
     size_t packet_nr{1};
     while (current_offset_ < file_size_ &&
@@ -74,8 +75,8 @@ void PCAPBuffer::start_buffering() {
       double processed_percentage =
           100 *
           static_cast<double>((double)current_offset_ / (double)file_size_);
-      std::cout << "Processed percentage> : " << processed_percentage
-                << std::endl;
+      std::cout << log_prefix_ << " Percentage of the whole file processed ("
+                << processed_percentage << "%)" << std::endl;
       file_handle_.seekg(current_offset_);
     }
 
@@ -85,10 +86,21 @@ void PCAPBuffer::start_buffering() {
   return;
 }
 
+std::optional<BufferedPackets> PCAPBuffer::next_batch() {
+  std::scoped_lock lock_(chuncks_mutex);
+  if (pcap_data_chunks_.empty()) {
+    return std::nullopt;
+  }
+
+  const auto next_chunk = pcap_data_chunks_.front();
+  pcap_data_chunks_.pop_front();
+  return next_chunk;
+}
+
 void PCAPBuffer::stop() {
-  std::cout << "# stop buffering " << std::endl;
+  std::cout << "[PCAP_BUFFER] stop buffering " << std::endl;
   is_started_.store(false, std::memory_order_release);
-  std::cout << "# closing pcap file " << std::endl;
+  std::cout << "[PCAP_BUFFER] closing pcap file " << std::endl;
   file_handle_.close();
 }
 } // namespace task::processors::mt_buffer

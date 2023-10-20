@@ -32,20 +32,13 @@ public:
 
   void stop();
 
-  std::optional<BufferedPackets> next_batch() {
-    std::scoped_lock lock_(chuncks_mutex);
-    if (pcap_data_chunks_.empty()) {
-      return std::nullopt;
-    }
-
-    const auto next_chunk = pcap_data_chunks_.front();
-    pcap_data_chunks_.pop_front();
-    return next_chunk;
-  }
+  std::optional<BufferedPackets> next_batch();
 
   bool is_started() const noexcept {
     return is_started_.load(std::memory_order_acquire);
   }
+
+  void wait_started() { is_started_.wait(false); }
 
   std::thread &thread() { return producer_thread_; }
 
@@ -65,5 +58,7 @@ private:
 
   static constexpr size_t BATCH_SIZE = 16 * 1024 * 1024;
   static constexpr bool ENABLE_DEBUGGING{false};
+
+  static constexpr std::string_view log_prefix_ = "[PCAP_BUFFER]";
 };
 } // namespace task::processors::mt_buffer

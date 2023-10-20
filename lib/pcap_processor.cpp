@@ -30,12 +30,11 @@ PCAPProcessor::PCAPProcessor(std::string path,
   pcap_buffer_ = std::make_unique<mt_buffer::PCAPBuffer>(pcap_file_, file_size_,
                                                          HEADER_SIZE);
 
-  pcap_buffer_->start_buffering();
-
   consumer_thread_ = std::thread([this]() {
     std::cout << "Starting consumer thread: " << std::this_thread::get_id()
               << std::endl;
 
+    pcap_buffer_->wait_started();
     size_t total_number_packets = 0;
 
     // decoder handler, calls the decode message when seeing an UDP packet
@@ -51,6 +50,8 @@ PCAPProcessor::PCAPProcessor(std::string path,
     }
     print_end_of_file_info(total_number_packets);
   });
+
+  pcap_buffer_->start_buffering();
 
   pcap_buffer_->thread().join();
   consumer_thread_.join();

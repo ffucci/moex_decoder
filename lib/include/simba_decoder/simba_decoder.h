@@ -70,7 +70,9 @@ struct SIMBADecoder {
       auto sbe_header_span =
           udp_payload.subspan(current_offset_, sizeof(sbe_header));
       std::memcpy(&sbe_header, sbe_header_span.data(), sbe_header_span.size());
-      std::cout << sbe_header.to_string() << std::endl;
+      if constexpr (ENABLE_DEBUGGING) {
+        std::cout << sbe_header.to_string() << std::endl;
+      }
       current_offset_ += sizeof(sbe_header);
 
       auto template_type = from_id_to_type(sbe_header.template_id);
@@ -164,6 +166,6 @@ struct SIMBADecoder {
       {17, types::Messages::OrderBookSnapshotType}};
   MessageHandlers message_handlers_{};
 
-  static constexpr bool ENABLE_DEBUGGING{true};
+  static constexpr bool ENABLE_DEBUGGING{false};
 };
 } // namespace task::simba::decoder
