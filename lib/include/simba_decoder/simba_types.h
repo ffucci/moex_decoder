@@ -1,29 +1,88 @@
 #pragma once
 
+#include <cmath>
 #include <cstdint>
+#include <iomanip>
+#include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace task::simba::types {
 
-#pragma pack(push, 1)
-struct Decimal5 {
-  int64_t mantissa{0};
-  int8_t exponent{5};
-};
-#pragma pack(pop)
-static_assert(sizeof(Decimal5) == 9);
+static constexpr uint64_t NULL_VALUE = 9223372036854775807;
+static constexpr double SIMBA_MOEX_EXPONENT = 1e-5;
+
+constexpr double to_normalized_price(int64_t price) {
+  return static_cast<double>(((double)price) * SIMBA_MOEX_EXPONENT);
+}
 
 template <typename Object>
 concept Handler = std::invocable<Object>;
 
-enum class MDEntryType : char { Bid, Ask };
+#pragma pack(push, 1)
+struct Decimal5 {
+  int64_t mantissa{0};
+  int8_t exponent{-5};
+};
+#pragma pack(pop)
+static_assert(sizeof(Decimal5) == 9);
 
-enum class MDUpdateAction : uint8_t { New, Delete, Update };
+enum class MDEntryType : char { Bid = '0', Offer = '1', EmptyBook = 'J' };
+
+constexpr MDEntryType from_char(char entry) {
+  switch (entry) {
+  case '0': {
+    return MDEntryType::Bid;
+  }
+  case '1': {
+    return MDEntryType::Offer;
+  }
+  case 'J': {
+    return MDEntryType::EmptyBook;
+  }
+  default:
+    throw std::runtime_error("Unexpected entry");
+  }
+}
+
+constexpr std::string_view entry_side_to_string(MDEntryType entry) {
+  switch (entry) {
+  case MDEntryType::Bid: {
+    return "BUY";
+  }
+  case MDEntryType::Offer: {
+    return "SELL";
+  }
+  case MDEntryType::EmptyBook: {
+    return "EMPTY_BOOK";
+  }
+  default:
+    throw std::runtime_error("Unexpected entry");
+  }
+}
+
+enum class MDUpdateAction : uint8_t { New = 0, Update, Delete };
+constexpr std::string_view update_action_to_string(MDUpdateAction entry) {
+  switch (entry) {
+  case MDUpdateAction::New: {
+    return "NEW";
+  }
+  case MDUpdateAction::Update: {
+    return "UPDATE";
+  }
+  case MDUpdateAction::Delete: {
+    return "DELETE";
+  }
+  default:
+    throw std::runtime_error("Unexpected MDUpdateAction entry");
+  }
+}
 
 #pragma pack(push, 1)
 struct OrderUpdate {
-  int64_t md_entry_id{0};
+  int64_t order_id{0};
   int64_t order_price{};
   int64_t order_volume{0};
   uint64_t md_flags_set{0};
@@ -33,12 +92,31 @@ struct OrderUpdate {
   MDUpdateAction action{};
   MDEntryType side{};
 
-  [[nodiscard]] std::string to_string() {
+  [[nodiscard]] std::string to_string() const noexcept {
     std::stringstream sstream;
-    sstream << "order_id:" << md_entry_id
-            << " , order_volume: " << order_volume;
+    sstream << "order_id:" << order_id << " , order_volume: " << order_volume;
     sstream << "order_price:" << order_price << " - " << 5;
     sstream << ", side :" << static_cast<char>(side) << ")";
+    return sstream.str();
+  }
+
+  [[nodiscard]] std::string to_csv_string() const noexcept {
+    std::stringstream sstream;
+    sstream << order_id;
+    auto normalized_order_price =
+        (order_price != NULL_VALUE ? to_normalized_price(order_price)
+                                   : std::nan("null value"));
+
+    sstream << ", " << normalized_order_price;
+    sstream << ", " << order_volume;
+
+    sstream << ", " << md_flags_set;
+    sstream << ", " << md_flags_set2;
+
+    sstream << ", " << security_id;
+    sstream << ", " << rpt_seq;
+    sstream << ", " << update_action_to_string(action);
+    sstream << ", " << entry_side_to_string(side);
     return sstream.str();
   }
 };
@@ -50,7 +128,8 @@ struct OrderExecution {
   int64_t order_id{0};
   int64_t order_price{};
   int64_t remaining_quantity{0};
-  int64_t trade_price{0}; // this is decimal with constant -5
+  int64_t trade_price{
+      0}; // this is decimal with constant -5 (this might be null)
   int64_t trade_volume{0};
   int64_t trader_id{0};
   uint64_t md_flags_set{0};
@@ -60,14 +139,37 @@ struct OrderExecution {
   MDUpdateAction action{};
   MDEntryType side{};
 
-  [[nodiscard]] std::string to_string() {
+  [[nodiscard]] std::string to_string() const noexcept {
     std::stringstream sstream;
-    sstream << "order_id:" << order_id << " , order_volume: " << order_price;
+    sstream << "order_id:" << order_id
+            << " , order_price: " << to_normalized_price(order_price);
     sstream << ", remaining_quantity:" << remaining_quantity;
     sstream << ", trade_price: "
-            << static_cast<double>((double)trade_price / (double)5);
+            << static_cast<double>((double)trade_price * SIMBA_MOEX_EXPONENT);
     sstream << ", security id: " << security_id;
     sstream << ", side :" << static_cast<char>(side) << ")";
+    return sstream.str();
+  }
+
+  [[nodiscard]] std::string to_csv_string() const noexcept {
+    std::stringstream sstream;
+    sstream << order_id;
+    auto normalized_order_price =
+        (order_price != NULL_VALUE ? to_normalized_price(order_price)
+                                   : std::nan("null value"));
+    sstream << ", " << normalized_order_price;
+    sstream << ", " << remaining_quantity;
+
+    sstream << ", " << to_normalized_price(trade_price);
+    sstream << ", " << trade_volume;
+
+    sstream << ", " << md_flags_set;
+    sstream << ", " << md_flags_set2;
+
+    sstream << ", " << security_id;
+    sstream << ", " << rpt_seq;
+
+    sstream << ", " << entry_side_to_string(side);
     return sstream.str();
   }
 };
@@ -141,9 +243,12 @@ struct OrderBookEntry {
     std::stringstream sstream;
     sstream << "order_book_entry = (order id: " << order_id
             << ", transact_time: " << transact_time;
-    sstream << ",order_price: " << order_price
+    sstream << ",order_price: "
+            << ((order_price == NULL_VALUE) ? std::string("NULL")
+                                            : std::to_string(order_price))
             << ", order_volume: " << order_volume;
-    sstream << ", trade_id" << trade_id << ")";
+    sstream << ", side: " << static_cast<char>(side);
+    sstream << ", trade_id: " << trade_id << ")";
     return sstream.str();
   }
 };
@@ -168,7 +273,7 @@ struct MarketDataPacketHeader {
     std::stringstream sstream;
     sstream << "market_data_packet_header = (sequence number: "
             << sequence_number << ", message_size: " << message_size;
-    sstream << ",message_flags: " << message_flags
+    sstream << ", message_flags: " << message_flags
             << ", sending_time: " << sending_time << ")";
     return sstream.str();
   }
@@ -210,5 +315,91 @@ struct SBEHeader {
 };
 #pragma pack(pop)
 static_assert(sizeof(SBEHeader) == 8);
+
+class OrderBookSnapshot {
+public:
+  OrderBookSnapshot(const OrderBookSnapshotHeader &snapshot_header)
+      : snapshot_header_(snapshot_header) {}
+
+  void insert(OrderBookEntry &&entry) {
+    if (entry.order_price == NULL_VALUE) {
+      return;
+    }
+
+    const auto index = to_index(entry.side);
+    if (entry.side == MDEntryType::EmptyBook) {
+      return;
+    }
+
+    if (entry.side == MDEntryType::Bid) {
+      bid_book_.emplace(entry.order_price, entry);
+    } else {
+      ask_book_.emplace(entry.order_price, entry);
+    }
+  }
+
+  [[nodiscard]] std::string to_string() const noexcept {
+    std::stringstream sstream;
+    int32_t price_width = 10, quantity_width = 18;
+    sstream << std::resetiosflags(std::ios::left);
+
+    sstream << "------------------------------------------------- " << '\n';
+    sstream << std::setw(quantity_width) << "Volume"
+            << "  ";
+    sstream << std::setw(price_width) << "    | Price |    ";
+    sstream << std::setw(price_width) << "Volume" << std::setw(quantity_width)
+            << " ";
+    sstream << "\n";
+
+    auto ask_iterator = ask_book_.rbegin();
+    while (ask_iterator != ask_book_.rend()) {
+      sstream << std::setiosflags(std::ios::left);
+      sstream << std::setw(quantity_width) << " ";
+      sstream << std::setw(price_width);
+      sstream << std::setprecision(5) << ask_iterator->first
+              << std::setw(price_width) << " ";
+      sstream << ask_iterator->second.order_volume << std::setw(quantity_width)
+              << " ";
+      sstream << "\n";
+      ++ask_iterator;
+    }
+    sstream << std::resetiosflags(std::ios::left);
+    sstream << "----------------------BBO----------------------- " << '\n';
+
+    auto bid_iterator = bid_book_.begin();
+    while (bid_iterator != bid_book_.end()) {
+      sstream << " " << std::setw(quantity_width);
+      sstream << bid_iterator->second.order_volume;
+      sstream << " " << std::setw(price_width) << std::setprecision(10)
+              << bid_iterator->first;
+      sstream << "\n";
+      ++bid_iterator;
+    }
+
+    return sstream.str();
+  }
+
+private:
+  constexpr uint8_t to_index(MDEntryType side) {
+    switch (side) {
+    case MDEntryType::Bid: {
+      return 0;
+    }
+    case MDEntryType::Offer: {
+      return 1;
+    }
+    case MDEntryType::EmptyBook: {
+      return 2;
+    }
+    default: {
+      throw std::runtime_error("Cannot convert into index the book side");
+    }
+    }
+  }
+
+  OrderBookSnapshotHeader snapshot_header_{};
+  std::map<int64_t, OrderBookEntry, std::greater<>> bid_book_{};
+  std::map<int64_t, OrderBookEntry> ask_book_{};
+};
 
 } // namespace task::simba::types

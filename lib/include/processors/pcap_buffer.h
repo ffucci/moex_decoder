@@ -114,6 +114,8 @@ public:
   void stop() {
     std::cout << "# stop buffering " << std::endl;
     is_started_.store(false, std::memory_order_release);
+    std::cout << "# closing pcap file " << std::endl;
+    file_handle_.close();
   }
 
   std::optional<BufferedPackets> next_batch() {

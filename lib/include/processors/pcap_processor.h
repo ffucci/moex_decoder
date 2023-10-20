@@ -17,58 +17,16 @@
 #include "simba_decoder/simba_types.h"
 
 namespace task::processors {
+
+struct ErrorMessage {
+  static constexpr std::string_view ERROR_MSG_ZERO_SIZE =
+      "Cannot analyze a file of size zero";
+};
+
 class PCAPProcessor {
 public:
-  PCAPProcessor(std::string path) {
-    std::filesystem::path reference{std::move(path)};
-    pcap_file_ =
-        std::ifstream(reference.string(), std::ios::binary | std::ios::ate);
-
-    if (!pcap_file_)
-      throw std::runtime_error(reference.string() + ": " +
-                               std::strerror(errno));
-
-    auto end = pcap_file_.tellg();
-    std::cout << "FILE NAME > " << reference.string() << std::endl;
-    std::cout << "FILE SIZE > " << end << " bytes " << std::endl;
-
-    pcap_file_.seekg(0, std::ios::beg);
-
-    file_size_ = std::size_t(end - pcap_file_.tellg());
-    if (file_size_ == 0)
-      throw std::runtime_error("Cannot analyze a file of zero dimension");
-
-    process_header();
-    pcap_file_.seekg(HEADER_SIZE);
-
-    // start to produce data
-    pcap_buffer_ = std::make_unique<mt_buffer::PCAPBuffer>(
-        pcap_file_, file_size_, HEADER_SIZE);
-
-    pcap_buffer_->start_buffering();
-
-    consumer_thread_ = std::thread([this]() {
-      std::cout << "Starting consumer thread: " << std::this_thread::get_id()
-                << std::endl;
-
-      size_t total_number_packets = 0;
-      std::invocable<std::span<const std::byte>> auto handler =
-          [this](std::span<const std::byte> udp_payload) {
-            decoder.decode_message(udp_payload);
-          };
-      PacketProcessor processor(handler);
-      while (pcap_buffer_->is_started()) {
-        total_number_packets += process_batch(processor);
-        std::this_thread::sleep_for(std::chrono::microseconds(1000));
-      }
-      std::cout << "##### Finished to process file ### " << std::endl;
-      std::cout << "Total number packets: " << total_number_packets
-                << std::endl;
-    });
-
-    pcap_buffer_->thread().join();
-    consumer_thread_.join();
-  }
+  PCAPProcessor(std::string path,
+                const simba::decoder::MessageHandlers &handlers);
 
   template <std::invocable<std::span<const std::byte>> Handler>
   [[nodiscard]] size_t process_batch(PacketProcessor<Handler> &processor) {
@@ -106,32 +64,15 @@ public:
     return total_number_packets;
   }
 
+  ~PCAPProcessor();
+
 private:
-  void process_header() {
-    std::vector<std::byte> global_header(HEADER_SIZE);
-
-    if (!pcap_file_.read((char *)global_header.data(), HEADER_SIZE))
-      throw std::runtime_error("Cannot PCAP file read header.");
-
-    pcap::types::pcap_hdr_t header;
-    std::memcpy(&header, global_header.data(), global_header.size());
-
-    std::cout << "########## PCAP HEADER #############" << std::endl;
-    std::cout << "magic number: " << std::hex << header.magic_number
-              << std::endl;
-    std::cout << "version major: " << std::hex << header.version_major
-              << std::endl;
-    std::cout << "version minor: " << std::hex << header.version_minor
-              << std::endl;
-    std::cout << "####################################" << std::endl;
-  }
+  void process_header();
+  void print_end_of_file_info(size_t total_packets_number);
 
   size_t file_size_{0};
-
   std::ifstream pcap_file_;
-
   std::unique_ptr<mt_buffer::PCAPBuffer> pcap_buffer_{};
-
   std::thread consumer_thread_{};
 
   simba::decoder::SIMBADecoder decoder;
