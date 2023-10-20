@@ -354,7 +354,7 @@ public:
     sstream << "----------------------------------------------" << '\n';
 
     auto ask_iterator = ask_book_.rbegin();
-    sstream << std::setiosflags(std::ios::left);
+    sstream << std::setiosflags(std::ios::right);
 
     while (ask_iterator != ask_book_.rend()) {
       sstream << std::right << "|";
@@ -366,6 +366,7 @@ public:
               << to_normalized_price(ask_iterator->first);
 
       sstream << std::setw(quantity_width) << ask_iterator->second.order_volume;
+      sstream << std::setw(price_width - 2) << std::right << "|";
       sstream << "\n";
       ++ask_iterator;
     }
@@ -378,11 +379,12 @@ public:
       sstream << std::setw(price_width + 1) << std::right << std::fixed
               << std::setprecision(5) << " "
               << to_normalized_price(bid_iterator->first);
-      sstream << std::setw(quantity_width + 4) << " |";
+      sstream << std::setw(quantity_width + price_width - 2) << std::right
+              << " |";
       sstream << "\n";
       ++bid_iterator;
     }
-    sstream << "-----------------------------------------------" << '\n';
+    sstream << "----------------------------------------------" << '\n';
 
     return sstream.str();
   }
