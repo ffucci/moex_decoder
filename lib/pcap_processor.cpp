@@ -77,8 +77,8 @@ void PCAPProcessor::process_header() {
 }
 
 void PCAPProcessor::print_end_of_file_info(size_t total_packets_number) {
-  std::cout << "##### Finished to process file ### " << std::endl;
-  std::cout << "# Total number packets of packets processed: "
+  std::cout << log_prefix_ << "- Finished to process file " << std::endl;
+  std::cout << log_prefix_ << "- Total number packets of packets processed: "
             << total_packets_number << std::endl;
 }
 
