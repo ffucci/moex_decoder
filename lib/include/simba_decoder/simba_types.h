@@ -12,10 +12,11 @@
 namespace task::simba::types {
 
 static constexpr uint64_t NULL_VALUE = 9223372036854775807;
-static constexpr double SIMBA_MOEX_EXPONENT = 1e-5;
+static constexpr double SIMBA_MOEX_EXPONENT = 1e5;
 
 constexpr double to_normalized_price(int64_t price) {
-  return static_cast<double>(((double)price) * SIMBA_MOEX_EXPONENT);
+  return static_cast<double>((static_cast<double>(price)) /
+                             SIMBA_MOEX_EXPONENT);
 }
 
 template <typename Object>
@@ -340,41 +341,48 @@ public:
 
   [[nodiscard]] std::string to_string() const noexcept {
     std::stringstream sstream;
-    int32_t price_width = 10, quantity_width = 18;
+    int32_t price_width = 10, quantity_width = 12;
     sstream << std::resetiosflags(std::ios::left);
-
-    sstream << "------------------------------------------------- " << '\n';
-    sstream << std::setw(quantity_width) << "Volume"
-            << "  ";
-    sstream << std::setw(price_width) << "    | Price |    ";
-    sstream << std::setw(price_width) << "Volume" << std::setw(quantity_width)
-            << " ";
+    sstream << snapshot_header_.to_string() << '\n';
+    sstream << "----------------------------------------------" << '\n';
+    sstream << std::setw(3) << "| Volume ";
+    sstream << " |       Price      | ";
+    sstream << std::setw(3) << " ";
+    sstream << "Volume"
+            << "     |";
     sstream << "\n";
+    sstream << "----------------------------------------------" << '\n';
 
     auto ask_iterator = ask_book_.rbegin();
+    sstream << std::setiosflags(std::ios::left);
+
     while (ask_iterator != ask_book_.rend()) {
-      sstream << std::setiosflags(std::ios::left);
-      sstream << std::setw(quantity_width) << " ";
-      sstream << std::setw(price_width);
-      sstream << std::setprecision(5) << ask_iterator->first
-              << std::setw(price_width) << " ";
-      sstream << ask_iterator->second.order_volume << std::setw(quantity_width)
-              << " ";
+      sstream << std::right << "|";
+
+      sstream << std::setw(4) << " ";
+
+      sstream << std::right << std::fixed << std::setprecision(5)
+              << std::setw(price_width) << "  "
+              << to_normalized_price(ask_iterator->first);
+
+      sstream << std::setw(quantity_width) << ask_iterator->second.order_volume;
       sstream << "\n";
       ++ask_iterator;
     }
-    sstream << std::resetiosflags(std::ios::left);
-    sstream << "----------------------BBO----------------------- " << '\n';
 
     auto bid_iterator = bid_book_.begin();
     while (bid_iterator != bid_book_.end()) {
-      sstream << " " << std::setw(quantity_width);
-      sstream << bid_iterator->second.order_volume;
-      sstream << " " << std::setw(price_width) << std::setprecision(10)
-              << bid_iterator->first;
+      sstream << std::right << "|";
+      sstream << std::right << std::setw(3)
+              << bid_iterator->second.order_volume;
+      sstream << std::setw(price_width + 1) << std::right << std::fixed
+              << std::setprecision(5) << " "
+              << to_normalized_price(bid_iterator->first);
+      sstream << std::setw(quantity_width + 4) << " |";
       sstream << "\n";
       ++bid_iterator;
     }
+    sstream << "-----------------------------------------------" << '\n';
 
     return sstream.str();
   }
