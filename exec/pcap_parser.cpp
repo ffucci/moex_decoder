@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
       cli.opt<std::string>("file").desc("PCAP file to analyze");
   auto &out_csv_path = cli.opt<std::string>("?out-orders-csv")
                            .desc("Decoded CSV output for incremental stream");
+
   auto &out_snapshot_log_path =
       cli.opt<std::string>("?out-book")
           .desc("Decoded OrderBook for order book snapshot");

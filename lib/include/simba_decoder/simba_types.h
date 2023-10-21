@@ -34,50 +34,50 @@ enum class MDEntryType : char { Bid = '0', Offer = '1', EmptyBook = 'J' };
 
 constexpr MDEntryType from_char(char entry) {
   switch (entry) {
-  case '0': {
-    return MDEntryType::Bid;
-  }
-  case '1': {
-    return MDEntryType::Offer;
-  }
-  case 'J': {
-    return MDEntryType::EmptyBook;
-  }
-  default:
-    throw std::runtime_error("Unexpected entry");
+    case '0': {
+      return MDEntryType::Bid;
+    }
+    case '1': {
+      return MDEntryType::Offer;
+    }
+    case 'J': {
+      return MDEntryType::EmptyBook;
+    }
+    default:
+      throw std::runtime_error("Unexpected entry");
   }
 }
 
 constexpr std::string_view entry_side_to_string(MDEntryType entry) {
   switch (entry) {
-  case MDEntryType::Bid: {
-    return "BUY";
-  }
-  case MDEntryType::Offer: {
-    return "SELL";
-  }
-  case MDEntryType::EmptyBook: {
-    return "EMPTY_BOOK";
-  }
-  default:
-    throw std::runtime_error("Unexpected entry");
+    case MDEntryType::Bid: {
+      return "BUY";
+    }
+    case MDEntryType::Offer: {
+      return "SELL";
+    }
+    case MDEntryType::EmptyBook: {
+      return "EMPTY_BOOK";
+    }
+    default:
+      throw std::runtime_error("Unexpected entry");
   }
 }
 
 enum class MDUpdateAction : uint8_t { New = 0, Update, Delete };
 constexpr std::string_view update_action_to_string(MDUpdateAction entry) {
   switch (entry) {
-  case MDUpdateAction::New: {
-    return "NEW";
-  }
-  case MDUpdateAction::Update: {
-    return "UPDATE";
-  }
-  case MDUpdateAction::Delete: {
-    return "DELETE";
-  }
-  default:
-    throw std::runtime_error("Unexpected MDUpdateAction entry");
+    case MDUpdateAction::New: {
+      return "NEW";
+    }
+    case MDUpdateAction::Update: {
+      return "UPDATE";
+    }
+    case MDUpdateAction::Delete: {
+      return "DELETE";
+    }
+    default:
+      throw std::runtime_error("Unexpected MDUpdateAction entry");
   }
 }
 
@@ -130,7 +130,7 @@ struct OrderExecution {
   int64_t order_price{};
   int64_t remaining_quantity{0};
   int64_t trade_price{
-      0}; // this is decimal with constant -5 (this might be null)
+      0};  // this is decimal with constant -5 (this might be null)
   int64_t trade_volume{0};
   int64_t trader_id{0};
   uint64_t md_flags_set{0};
@@ -318,7 +318,7 @@ struct SBEHeader {
 static_assert(sizeof(SBEHeader) == 8);
 
 class OrderBookSnapshot {
-public:
+ public:
   OrderBookSnapshot(const OrderBookSnapshotHeader &snapshot_header)
       : snapshot_header_(snapshot_header) {}
 
@@ -392,21 +392,21 @@ public:
     return sstream.str();
   }
 
-private:
+ private:
   constexpr uint8_t to_index(MDEntryType side) {
     switch (side) {
-    case MDEntryType::Bid: {
-      return 0;
-    }
-    case MDEntryType::Offer: {
-      return 1;
-    }
-    case MDEntryType::EmptyBook: {
-      return 2;
-    }
-    default: {
-      throw std::runtime_error("Cannot convert into index the book side");
-    }
+      case MDEntryType::Bid: {
+        return 0;
+      }
+      case MDEntryType::Offer: {
+        return 1;
+      }
+      case MDEntryType::EmptyBook: {
+        return 2;
+      }
+      default: {
+        throw std::runtime_error("Cannot convert into index the book side");
+      }
     }
   }
 
@@ -415,4 +415,4 @@ private:
   std::map<int64_t, OrderBookEntry> ask_book_{};
 };
 
-} // namespace task::simba::types
+}  // namespace task::simba::types

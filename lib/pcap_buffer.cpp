@@ -31,10 +31,11 @@ void PCAPBuffer::start_buffering() {
       buffered_packets.start_packet_number = packet_nr;
       while (current_offset_ < file_size_ && offset < BATCH_SIZE) {
         pcap::types::pcaprec_hdr_s packet_header;
-        std::span<std::byte> buffer_2{local_buffer_.data() + offset,
-                                      sizeof(packet_header)};
+        std::span<std::byte> pcap_packet_header_span{
+            local_buffer_.data() + offset, sizeof(packet_header)};
 
-        std::memcpy(&packet_header, buffer_2.data(), buffer_2.size());
+        std::memcpy(&packet_header, pcap_packet_header_span.data(),
+                    pcap_packet_header_span.size());
 
         if constexpr (ENABLE_DEBUGGING) {
           std::cout << "usec: " << std::hex << packet_header.ts_usec

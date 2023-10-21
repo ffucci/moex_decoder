@@ -1,12 +1,12 @@
-#include "processors/pcap_processor.h"
-
 #include <concepts>
+
+#include "processors/pcap_processor.h"
 
 namespace task::processors {
 
 template <std::invocable<std::span<const std::byte>> Handler>
-[[nodiscard]] size_t
-PCAPProcessor::process_batch(PacketProcessor<Handler> &processor) {
+[[nodiscard]] size_t PCAPProcessor::process_batch(
+    PacketProcessor<Handler> &processor) {
   using namespace pcap::types;
 
   size_t offset = sizeof(pcap::types::pcap_hdr_t);
@@ -42,4 +42,4 @@ PCAPProcessor::process_batch(PacketProcessor<Handler> &processor) {
   return total_number_packets;
 }
 
-} // namespace task::processors
+}  // namespace task::processors
