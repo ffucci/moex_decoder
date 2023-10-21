@@ -29,6 +29,8 @@ The packet processing processes and labels the packets contained in the incoming
 2. If the packet is UDP it tries to decode it according the SIMBA Spectre format. The data types are defined in the *simba_types.h*
 headers. The algorithm to decode the SIMBA spectra messages is defined in the *simba_decoder.h* file.
 
+# Test Coverage
+Few tests for the decoder were added for sake of completeness but the full coverage has not been provided because the PCAP file used for test already provide high coverage of the entire project. Anyway it is easy to extend the tests for other messages as well. 
 
 # Produced Output
 
