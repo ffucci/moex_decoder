@@ -31,6 +31,8 @@ void PacketProcessor<UDPPacketHandler>::process_packet(
     }
   }
 
+  // SKIP TCP packets because the tool does not support them
+
   offset += UDP_HEADER_SIZE;
   auto udp_span = packet.subspan(offset);
   udp_packet_handler_(udp_span);
