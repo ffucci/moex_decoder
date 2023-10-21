@@ -24,6 +24,7 @@ private:
   static constexpr size_t ETH_PACKET_SIZE = 14;
   static constexpr size_t UDP_HEADER_SIZE = 8;
 
+  static constexpr std::byte UDP_PROTOCOL = std::byte{0x11};
   static constexpr bool ENABLE_DEBUGGING{false};
 };
 

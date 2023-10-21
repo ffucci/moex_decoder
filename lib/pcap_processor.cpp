@@ -46,7 +46,8 @@ PCAPProcessor::PCAPProcessor(std::string path,
     PacketProcessor processor(handler);
     while (pcap_buffer_->is_started()) {
       total_number_packets += process_batch(processor);
-      std::this_thread::sleep_for(std::chrono::microseconds(1000));
+      std::this_thread::sleep_for(
+          std::chrono::microseconds(CONSUMER_BUFFERING_TIME));
     }
     print_end_of_file_info(total_number_packets);
   });

@@ -24,15 +24,20 @@ void PacketProcessor<UDPPacketHandler>::process_packet(
   // UDP header start
   offset += ip_packet.header_length();
 
+  // SKIP TCP packets because the tool does not support them
+  if (ip_packet.protocol != UDP_PROTOCOL) {
+    std::cout << "[PACKET_PROCESSOR] - skipping non-UDP packets since the tool "
+                 "does not support such packets"
+              << std::endl;
+    return;
+  }
+
   if constexpr (ENABLE_DEBUGGING) {
     if (packet_processed_ % 100000 == 0) {
       std::cout << "[PACKET_PROCESSOR] - UDP PACKET SIZE: " << std::dec
                 << packet.size() - offset << std::endl;
     }
   }
-
-  // SKIP TCP packets because the tool does not support them
-
   offset += UDP_HEADER_SIZE;
   auto udp_span = packet.subspan(offset);
   udp_packet_handler_(udp_span);
