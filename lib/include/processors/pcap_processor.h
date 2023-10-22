@@ -23,10 +23,12 @@ namespace task::processors {
 struct ErrorMessage {
   static constexpr std::string_view ERROR_MSG_ZERO_SIZE =
       "Cannot analyze a file of size zero";
+  static constexpr std::string_view ERROR_CANNOT_READ_PCAP_HEADER =
+      "Cannot read the PCAP file header, make sure it is a valid PCAP file.";
 };
 
 class PCAPProcessor {
-public:
+ public:
   PCAPProcessor(std::string path,
                 const simba::decoder::MessageHandlers &handlers);
 
@@ -35,7 +37,7 @@ public:
 
   ~PCAPProcessor();
 
-private:
+ private:
   void process_header();
   void print_end_of_file_info(size_t total_packets_number);
 
@@ -52,7 +54,8 @@ private:
   static constexpr bool ENABLE_DEBUGGING{false};
 
   static constexpr std::string_view log_prefix_{"[PCAP_PROCESSOR]"};
+  static constexpr uint32_t PCAP_REFERENCE_MAGIC_NUMBER{0xa1b23c4d};
 };
-} // namespace task::processors
+}  // namespace task::processors
 
 #include "processors/pcap_processor.hpp"

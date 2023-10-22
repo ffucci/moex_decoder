@@ -62,14 +62,20 @@ void PCAPProcessor::process_header() {
   std::vector<std::byte> global_header(HEADER_SIZE);
 
   if (!pcap_file_.read((char *)global_header.data(), HEADER_SIZE))
-    throw std::runtime_error("Cannot read the PCAP file header, make sure it "
-                             "is a valid PCAP file.");
+    throw std::runtime_error(
+        ErrorMessage::ERROR_CANNOT_READ_PCAP_HEADER.data());
 
   pcap::types::pcap_hdr_t header;
   std::memcpy(&header, global_header.data(), global_header.size());
 
   std::cout << "########## PCAP HEADER #############" << std::endl;
   std::cout << "magic number: " << std::hex << header.magic_number << std::endl;
+
+  if (header.magic_number != PCAP_REFERENCE_MAGIC_NUMBER) {
+    std::cout << "WARNING: the tool has been tested with files produced with "
+                 "magic number: 0xA1B23C4D";
+    exit(1);
+  }
   std::cout << "version major: " << std::hex << header.version_major
             << std::endl;
   std::cout << "version minor: " << std::hex << header.version_minor
@@ -85,4 +91,4 @@ void PCAPProcessor::print_end_of_file_info(size_t total_packets_number) {
 
 PCAPProcessor::~PCAPProcessor() { pcap_buffer_->stop(); }
 
-} // namespace task::processors
+}  // namespace task::processors
