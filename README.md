@@ -1,5 +1,5 @@
 # Overview
-The tool has been tested on little endian architecture Intel i5 architecture, on file produced with little endian formats like the ones provided by the MOEX exchange FTP. 
+
 
 # How to run the tool
 The parser expects a PCAP file that is obtained from the MOEX
@@ -149,3 +149,6 @@ Starting consumer thread: 0x70000e7b9000<br>
 [PCAP_BUFFER] Percentage of the whole file processed (10.0842%)<br>
 [PCAP_BUFFER] Percentage of the whole file processed (10.9245%)<br>
 [PCAP_BUFFER] Percentage of the whole file processed (11.7649%)<br>
+
+## Final Notes
+The tool has been tested on little endian architecture Intel i5 architecture, on file produced with little endian formats like the ones provided by the MOEX exchange FTP. 

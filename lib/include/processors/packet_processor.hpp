@@ -6,11 +6,11 @@ template <std::invocable<std::span<const std::byte>> UDPPacketHandler>
 void PacketProcessor<UDPPacketHandler>::process_packet(
     std::span<const std::byte> packet) {
   std::span<const std::byte> ethernet_frame{packet.data(), ETH_PACKET_SIZE};
-  datamodel::EthernetPacket eth_packet(ethernet_frame);
+  transport_layer::EthernetPacket eth_packet(ethernet_frame);
   size_t offset = ETH_PACKET_SIZE;
 
   auto ip_span = packet.subspan(offset, 80);
-  datamodel::IPPacket ip_packet(ip_span);
+  transport_layer::IPPacket ip_packet(ip_span);
 
   if constexpr (ENABLE_DEBUGGING) {
     if (packet_processed_ % 100000 == 0) {
@@ -43,4 +43,4 @@ void PacketProcessor<UDPPacketHandler>::process_packet(
   udp_packet_handler_(udp_span);
   ++packet_processed_;
 }
-} // namespace task::processors
+}  // namespace task::processors

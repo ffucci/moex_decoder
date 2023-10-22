@@ -1,6 +1,7 @@
 add_library(task
     cli.cpp
     packet_processor.cpp
+    packet_types.cpp
     pcap_processor.cpp
     pcap_buffer.cpp
     simba_decoder.cpp

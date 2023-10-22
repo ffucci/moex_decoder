@@ -389,8 +389,9 @@ class SIMBADecoderTestFixture : public ::testing::Test {
   simba::decoder::MessageHandlers message_handlers;
 };
 
-TEST_F(SIMBADecoderTestFixture,
-       GIVEN_byte_array_WHEN_decoding_THEN_decode_correctly) {
+TEST_F(
+    SIMBADecoderTestFixture,
+    GIVEN_byte_array_WHEN_decoding_single_order_update_THEN_decode_correctly) {
   simba::decoder::MessageHandlers message_handlers;
   std::vector<simba::types::OrderUpdate> decoded_orders;
   message_handlers.order_update_handler =
@@ -416,7 +417,7 @@ TEST_F(SIMBADecoderTestFixture,
 }
 
 TEST_F(SIMBADecoderTestFixture,
-       GIVEN_byte_array_WHEN_decoding_order_execution_THEN_decode_correctly) {
+       GIVEN_byte_array_WHEN_decoding_long_message_THEN_decode_correctly) {
   simba::decoder::MessageHandlers message_handlers;
   std::vector<simba::types::OrderExecution> decoded_orders;
   std::vector<simba::types::OrderUpdate> decoded_order_update;
