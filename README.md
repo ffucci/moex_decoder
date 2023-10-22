@@ -1,6 +1,3 @@
-# Overview
-
-
 # How to run the tool
 The parser expects a PCAP file that is obtained from the MOEX
 ./pcap_parser --file path/2023-10-10.1359-1406.pcap as an example
